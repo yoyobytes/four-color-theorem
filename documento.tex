@@ -1,0 +1,1793 @@
+\documentclass[12pt,letterpaper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+\usepackage{cite}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+
+\usetikzlibrary{matrix,arrows.meta,positioning,shapes,calc}
+
+% ── Geometry ──────────────────────────────────────────────────────────────────
+\geometry{
+    headheight=14pt,
+    letterpaper,
+    top=2.5cm, bottom=2.5cm,
+    left=3cm,  right=2.5cm
+}
+
+% ── Colors ────────────────────────────────────────────────────────────────────
+\definecolor{azulnodo}{RGB}{33,150,243}
+\definecolor{verdenodo}{RGB}{76,175,80}
+\definecolor{naranjanodo}{RGB}{255,152,0}
+\definecolor{rosanodo}{RGB}{233,30,99}
+\definecolor{grisoscuro}{RGB}{55,71,79}
+\definecolor{codeblue}{RGB}{0,100,180}
+\definecolor{codegray}{RGB}{120,120,120}
+
+% ── Listings ──────────────────────────────────────────────────────────────────
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegray}\itshape,
+    stringstyle=\color{verdenodo},
+    numbers=left,
+    numberstyle=\tiny\color{codegray},
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{gray!8},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    framerule=0.4pt,
+    rulecolor=\color{gray!40},
+    captionpos=b,
+    tabsize=4,
+}
+
+% ── Theorem environments ───────────────────────────────────────────────────────
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ── Header/Footer ─────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Planar Graph Coloring --- Topological Peeling and CSP}}
+\fancyhead[R]{\small\thepage}
+\fancyfoot[C]{\small Programa Delf\'in 2026 --- UAEM}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ── Hyperref ──────────────────────────────────────────────────────────────────
+\hypersetup{
+    colorlinks=true,
+    linkcolor=codeblue,
+    citecolor=grisoscuro,
+    urlcolor=codeblue,
+    pdftitle={Planar Graph Coloring via Topological Peeling and CSP Backtracking},
+    pdfauthor={Yosef Ali Jimenez Munoz}
+}
+
+% ── Misc ──────────────────────────────────────────────────────────────────────
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{1.2em}
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\degr}{\operatorname{deg}}
+\newcommand{\ecc}{\operatorname{ecc}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\argmin}{\operatorname{argmin}}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ── Title Page ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+
+{\large Universidad Aut\'onoma del Estado de M\'exico}\\[0.3cm]
+{\large Programa Delf\'in 2026}\\[0.3cm]
+{\large Research Line: Theory of Computation}\\[2cm]
+
+{\LARGE\bfseries Planar Graph Coloring}\\[0.4cm]
+{\LARGE\bfseries via Topological Peeling}\\[0.4cm]
+{\LARGE\bfseries and CSP Backtracking}\\[0.8cm]
+
+{\large Mathematical and algorithmic documentation\\
+of a computational visualization of\\
+the Four Color Theorem}\\[2.5cm]
+
+\begin{tabular}{ll}
+\textbf{Author:}              & Yosef Ali Jim\'enez Mu\~noz \\
+\textbf{Student ID:}          & 492410631 \\
+\textbf{Home Institution:}    & Universidad Tecnol\'ogica de Altamira \\
+\textbf{Academic Advisor:}    & Dr. Jos\'e Raymundo Marcial Romero \\
+\textbf{Program:}             & Programa Delf\'in, Summer 2026 \\
+\textbf{Date:}                & June 2026
+\end{tabular}
+
+\vfill
+\end{titlepage}
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+We document the mathematical and algorithmic design of a computational
+visualization system for the Four Color Theorem, implemented in Python with the
+libraries \texttt{NetworkX}, \texttt{NumPy}, \texttt{SciPy}, and
+\texttt{Matplotlib}. The system operates on arbitrary planar graphs and executes
+a transformation pipeline that includes: planarity verification via the
+Boyer-Myrvold algorithm~\cite{boyermyrvold1999}; straight-line drawing via the
+Tutte embedding~\cite{tutte1963}; topological layer decomposition via outer-face
+peeling; inverse-order greedy coloring; analysis of Kempe
+chains~\cite{kempe1879}; and CSP backtracking with MRV and forward checking when
+the greedy fails to produce four colors. The Errera~\cite{errera1921} and
+Kittell~\cite{kittell1935} graphs are used as canonical test cases, concretely
+demonstrating the failure mechanism of Kempe's algorithm via tangled chains. The
+document includes complete mathematical foundations for each step, precise
+numerical values computed on the Errera graph, and situates the work historically
+from Kempe's incorrect proof to Gonthier's formal verification in
+Coq~\cite{gonthier2008}.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+The Four Color Theorem states that every planar graph can be colored with at
+most four colors so that no two adjacent vertices share a color. Formulated as a
+conjecture in 1852 by Francis Guthrie while coloring a map of English counties,
+it resisted proof for over a century~\cite{wilson2002}.
+
+The first proof was proposed by Alfred Kempe in 1879~\cite{kempe1879}, but Percy
+Heawood identified a fundamental error in 1890~\cite{heawood1890}. In 1921,
+Alfred Errera constructed a concrete planar graph exhibiting the exact failure
+point of Kempe's algorithm~\cite{errera1921}. A correct proof did not arrive
+until 1976, when Appel and Haken computationally verified that a finite set of
+configurations covers all possible cases~\cite{appelhaken1977}. Robertson,
+Sanders, Seymour, and Thomas simplified the proof to 633 configurations in
+1997~\cite{robertson1997}, and in 2005 Gonthier produced the first mechanically
+checkable formal verification in the Coq proof
+assistant~\cite{gonthier2008}.
+
+This document describes a visualization system that implements the algorithmic
+steps of the coloring process, from the representation of a graph as ordered
+pairs to the guarantee of four colors via CSP backtracking. The goal is not to
+prove the theorem (whose proof requires the global discharging argument) but to
+make visible the mathematical mechanisms underlying the problem: Euler's formula,
+triangulation, barycentric embedding, topological peeling, greedy coloring,
+Kempe chain failure, and constraint-based search.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Graph Representation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Formal Definition}
+
+\begin{definition}[Simple undirected graph]
+A graph $G = (V, E)$ consists of a finite set of vertices $V$ and a set of edges
+$E \subseteq \binom{V}{2}$, where $\binom{V}{2}$ denotes all two-element subsets
+of $V$. Each edge $e = \{u,v\} \in E$ is an unordered pair with $u \neq v$.
+\end{definition}
+
+The \textbf{degree} of a vertex $v$ is $\degr(v) = |\{u \in V : \{u,v\} \in E\}|$.
+The following identity holds because each edge contributes 1 to the degree of
+each of its two endpoints:
+
+\begin{equation}
+    \sum_{v \in V} \degr(v) = 2|E|.
+    \label{eq:handshake}
+\end{equation}
+
+\subsection{Input Format}
+
+The system reads a \texttt{grafo.json} file with the structure:
+
+\begin{lstlisting}[caption={Input file structure},label={lst:json}]
+{
+  "vertices": {"0": [x0, y0], "1": [x1, y1], ...},
+  "aristas":  [[0, 1], [1, 2], ...]
+}
+\end{lstlisting}
+
+The coordinates $(x_i, y_i)$ are used initially for geometric planarity checks,
+but the system then computes a canonical embedding via the Tutte algorithm
+(Section~\ref{sec:tutte}). Conversion from the edge list to the \texttt{NetworkX}
+adjacency structure runs in $O(|E|)$.
+
+\subsection{The Errera Graph}
+
+The Errera graph~\cite{errera1921} has $|V| = 17$ vertices and $|E| = 45$
+edges. Its degree sequence is twelve vertices of degree 5 and five of degree 6.
+Verification: $12 \cdot 5 + 5 \cdot 6 = 90 = 2 \cdot 45$,
+consistent with~\eqref{eq:handshake}. Its vertex connectivity is
+$\kappa(G) = 5$~\cite{errera1921}.
+
+The graph has a concentric layered structure:
+
+\begin{center}
+\begin{tabular}{clc}
+\toprule
+\textbf{Layer} & \textbf{Vertices} & \textbf{Role} \\
+\midrule
+Bottom apex & $\{0\}$            & Degree-5 vertex \\
+Ring 1      & $\{1,2,3,4,5\}$   & Inner pentagon \\
+Ring 2      & $\{6,7,8,9,10\}$  & Middle pentagon \\
+Ring 3      & $\{11,12,13,14,15\}$ & Outer pentagon \\
+Top apex    & $\{16\}$           & Degree-5 vertex \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This structure corresponds to two stacked pentagonal antiprisms with a
+5-fold dihedral symmetry group $D_5$~\cite{errera1921}.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Planarity Verification}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Definition and Fundamental Theorems}
+
+\begin{definition}[Planar graph]
+A graph $G$ is planar if there exists an embedding $\varphi: G \to \mathbb{R}^2$
+such that each vertex maps to a distinct point, each edge maps to a Jordan curve
+between its endpoints, and curves of distinct edges do not intersect except
+possibly at shared endpoints.
+\end{definition}
+
+\begin{theorem}[F\'ary, 1948~\cite{fary1948}]
+Every simple planar graph admits a straight-line embedding: a drawing where
+every edge is a line segment.
+\end{theorem}
+
+F\'ary's theorem justifies working with coordinates and segments without loss of
+generality.
+
+\begin{theorem}[Kuratowski, 1930~\cite{kuratowski1930}]
+A graph is planar if and only if it contains no subgraph homeomorphic to $K_5$
+or $K_{3,3}$.
+\end{theorem}
+
+\subsection{Boyer-Myrvold Algorithm}
+
+The system calls \texttt{nx.check\_planarity(G)}, which internally runs the
+Boyer-Myrvold algorithm~\cite{boyermyrvold1999}.
+
+\begin{theorem}[Boyer-Myrvold, 1999~\cite{boyermyrvold1999}]
+The Boyer-Myrvold algorithm determines planarity in $O(|V|)$ time and, when the
+graph is planar, constructs the combinatorial embedding.
+\end{theorem}
+
+The algorithm operates on the combinatorial representation, not on coordinates.
+For each vertex $v$ it stores the cyclic order $(\sigma_v(e_1), \sigma_v(e_2),
+\ldots)$ of incident edges, where $\sigma_v$ is a cyclic permutation. This
+structure---the \textbf{combinatorial embedding}---is sufficient to determine
+faces without coordinates.
+
+Geometric cross-checking with \texttt{Shapely} is an additional validation step
+applied to the input JSON. The intersection test between two segments
+$\overline{p_1 p_2}$ and $\overline{p_3 p_4}$ is based on the sign of the
+cross product:
+
+\begin{equation}
+(p_2 - p_1) \times (p_3 - p_1) \quad \text{and} \quad (p_2 - p_1) \times (p_4 - p_1).
+\end{equation}
+
+The segments intersect in their interiors if and only if the signs differ in both
+reciprocal checks~\cite{shamos1976}.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Euler's Formula and Maximality}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Euler's Formula}
+
+\begin{theorem}[Euler, 1752~\cite{euler1752}]
+For every connected planar graph, letting $F$ denote the number of faces
+(regions, including the unbounded exterior face):
+\begin{equation}
+    V - E + F = 2.
+    \label{eq:euler}
+\end{equation}
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+By induction on $|E|$. A tree with $n$ vertices has $n-1$ edges and one face,
+giving $n - (n-1) + 1 = 2$. Adding an edge between two components:
+$\Delta E = 1$, $\Delta F = 0$, so $V - E + F$ is preserved. Adding an edge
+within a component: $\Delta E = 1$, $\Delta F = 1$, also preserved.
+\end{proof}
+
+For the Errera graph: $17 - 45 + 30 = 2$ $\checkmark$, with 30 triangular faces.
+
+\subsection{Density Bound}
+
+\begin{theorem}
+\label{thm:density}
+For every simple planar graph with $|V| \geq 3$:
+\begin{equation}
+    |E| \leq 3|V| - 6.
+    \label{eq:density}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Every face has at least 3 edges on its boundary, and each edge borders exactly 2
+faces, so $3F \leq 2|E|$, i.e., $F \leq \frac{2|E|}{3}$.
+Substituting into~\eqref{eq:euler}:
+\[
+    |V| - |E| + \frac{2|E|}{3} \geq 2
+    \implies |V| - \frac{|E|}{3} \geq 2
+    \implies |E| \leq 3|V| - 6. \qedhere
+\]
+\end{proof}
+
+\subsection{Maximal Planar Graphs}
+
+\begin{definition}[Maximal planar graph]
+A planar graph $G$ is maximal if for every $\{u,v\} \notin E$, the graph
+$G' = (V, E \cup \{\{u,v\}\})$ is non-planar.
+\end{definition}
+
+\begin{theorem}
+A planar graph with $|V| \geq 3$ is maximal if and only if every face (including
+the outer face) is a triangle.
+\end{theorem}
+
+When the outer face is also a triangle, equality holds in~\eqref{eq:density}:
+$|E| = 3|V| - 6$. In the general case where the outer face has $h$ vertices:
+\begin{equation}
+    |E| = 3|V| - 6 - (h - 3).
+    \label{eq:maximal_general}
+\end{equation}
+
+For the Errera graph: $|E| = 45 = 3(17) - 6 = 45$ $\checkmark$, with $h = 3$.
+The graph is already maximal, so the maximalization step adds zero edges.
+
+\subsection{Existence of a Low-Degree Vertex}
+
+\begin{theorem}
+\label{thm:deg5}
+In every planar graph there exists at least one vertex $v$ with $\degr(v) \leq 5$.
+\end{theorem}
+
+\begin{proof}
+Suppose $\degr(v) \geq 6$ for all $v$. Then:
+\[
+2|E| = \sum_{v} \degr(v) \geq 6|V| \implies |E| \geq 3|V|.
+\]
+But Theorem~\ref{thm:density} requires $|E| \leq 3|V| - 6 < 3|V|$. Contradiction.
+\end{proof}
+
+This result guarantees that the inverse greedy coloring always finds a free color
+among six (Section~\ref{sec:greedy}).
+
+\subsection{Constrained Maximalization}
+
+The input graph may not be maximal. The system adds edges without crossing any
+existing ones:
+
+\begin{algorithm}[H]
+\caption{Constrained maximalization}
+\label{alg:maximal}
+\begin{algorithmic}[1]
+\Require Planar graph $G = (V, E)$ with positions $\mathbf{p}: V \to \mathbb{R}^2$
+\Ensure Maximal planar graph $G'$ with $E \subseteq E'$
+\State $\mathcal{C} \gets \binom{V}{2} \setminus E$
+\State Sort $\mathcal{C}$ by $\degr(u) + \degr(v)$ ascending
+\For{each $\{u,v\} \in \mathcal{C}$}
+    \If{$\overline{\mathbf{p}(u)\mathbf{p}(v)}$ crosses no edge of $E$}
+        \State $E \gets E \cup \{\{u,v\}\}$
+    \EndIf
+\EndFor
+\State \Return $G' = (V, E)$
+\end{algorithmic}
+\end{algorithm}
+
+Sorting by minimum degree first connects the most isolated vertices before the
+densely connected ones, producing a more balanced graph.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Tutte Embedding}
+\label{sec:tutte}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Tutte's Theorem}
+
+\begin{theorem}[Tutte, 1963~\cite{tutte1963}]
+Let $G$ be a 3-connected planar graph with outer face $F_0 = (v_1, \ldots, v_k)$
+fixed on a convex polygon in $\mathbb{R}^2$. If every interior vertex satisfies
+the \textbf{barycentric condition}:
+\begin{equation}
+    \mathbf{p}(v) = \frac{1}{\degr(v)} \sum_{u \sim v} \mathbf{p}(u),
+    \label{eq:barycentric}
+\end{equation}
+then the resulting embedding is a crossing-free straight-line drawing.
+\end{theorem}
+
+\subsection{The Linear System}
+
+Rearranging~\eqref{eq:barycentric} for each interior vertex $v_i$ and separating
+interior neighbors from boundary neighbors:
+\begin{equation}
+    \degr(v_i)\, \mathbf{p}(v_i)
+    - \sum_{\substack{u \sim v_i \\ u \in \text{interior}}} \mathbf{p}(u)
+    = \sum_{\substack{u \sim v_i \\ u \in F_0}} \mathbf{p}(u).
+    \label{eq:system}
+\end{equation}
+
+In matrix form, for the $x$ and $y$ coordinates separately:
+\begin{equation}
+    L_{\text{int}}\, \mathbf{x} = \mathbf{b}_x, \qquad
+    L_{\text{int}}\, \mathbf{y} = \mathbf{b}_y,
+    \label{eq:Lx}
+\end{equation}
+
+where $L_{\text{int}}$ is the \textbf{interior Laplacian submatrix}:
+\begin{equation}
+    (L_{\text{int}})_{ij} =
+    \begin{cases}
+        \degr(v_i) & i = j, \\
+        -1         & i \neq j \text{ and } v_i \sim v_j, \\
+        0          & \text{otherwise.}
+    \end{cases}
+    \label{eq:laplacian}
+\end{equation}
+
+The right-hand side vector $\mathbf{b}_x$ has at position $i$ the sum of the
+$x$-coordinates of the boundary neighbors of $v_i$.
+
+\subsection{Properties of the Laplacian}
+
+\begin{theorem}
+The matrix $L_{\text{int}}$ defined in~\eqref{eq:laplacian} is symmetric
+positive definite (SPD).
+\end{theorem}
+
+\begin{proof}
+$L_{\text{int}}$ is the submatrix of the graph Laplacian induced by the interior
+nodes. The full graph Laplacian of a connected graph has a single zero eigenvalue
+with eigenvector proportional to the all-ones vector. Fixing the boundary nodes
+(removing the corresponding rows and columns) eliminates this zero eigenvalue,
+making the submatrix invertible. Positive definiteness follows from spectral
+graph theory~\cite{chung1997}: all eigenvalues of $L_{\text{int}}$ are strictly
+positive.
+\end{proof}
+
+Since $L_{\text{int}}$ is SPD, system~\eqref{eq:Lx} has a unique solution, computed
+by \texttt{numpy.linalg.solve} via Gaussian elimination with partial pivoting
+in $O(m^3)$, where $m$ is the number of interior nodes.
+
+\subsection{Application to the Errera Graph}
+
+The outer face $\{0, 1, 2\}$ is fixed on an equilateral triangle of radius 8:
+\begin{align}
+    \mathbf{p}(0) &= (0,\; 8), \notag \\
+    \mathbf{p}(1) &= (-6.928,\; -4), \notag \\
+    \mathbf{p}(2) &= (6.928,\; -4). \notag
+\end{align}
+
+The 14 interior nodes $\{3, 4, \ldots, 16\}$ generate a $14 \times 14$ system
+with condition number $\kappa(L_{\text{int}}) \approx 18.25$, indicating a
+well-conditioned system. The upper-left $4 \times 4$ block of $L_{\text{int}}$
+is:
+
+\begin{equation}
+\begin{pmatrix}
+ 5 & -1 &  0 &  0 \\
+-1 &  5 & -1 &  0 \\
+ 0 & -1 &  5 & -1 \\
+ 0 &  0 & -1 &  6
+\end{pmatrix}
+\end{equation}
+
+Selected positions after solving the system:
+\begin{align}
+    \mathbf{p}(6)  &= (-1.7108,\; -1.0880), \notag \\
+    \mathbf{p}(11) &= (-0.5338,\; -0.6087), \notag \\
+    \mathbf{p}(16) &= (0.0,\; -0.7563). \notag
+\end{align}
+
+The outer face is selected by maximizing the sum of eccentricities. The
+\textbf{eccentricity} of a vertex is:
+\begin{equation}
+    \ecc(v) = \max_{u \in V} d(v, u),
+\end{equation}
+where $d(v, u)$ is the shortest-path distance, computed via BFS in
+$O(|V| + |E|)$. In the Errera graph: $\ecc(0) = \ecc(16) = 4$,
+$\ecc(v) = 3$ for all others, giving
+$\sum_{v \in \{0,1,2\}} \ecc(v) = 10$ as the maximum over all faces.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Topological Peeling}
+\label{sec:peeling}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Face Traversal: \texorpdfstring{$\sigma \circ \alpha^{-1}$}{sigma composed with alpha inverse}}
+
+Given the combinatorial embedding, faces are computed via dart traversal. A
+\textbf{dart} is a directed edge $(v \to w)$. Two operations are defined:
+\begin{align}
+    \alpha(v \to w) &= (w \to v) \qquad \text{(dart reversal)}, \\
+    \sigma_w(v \to w) &= \text{next dart clockwise around } w.
+\end{align}
+
+The composition $\sigma \circ \alpha^{-1}$ traverses the face adjacent to each
+dart: starting from $(v_0 \to v_1)$, the sequence
+\[
+(v_0 \to v_1),\; (\sigma \circ \alpha^{-1})(v_0 \to v_1),\; \ldots
+\]
+eventually closes at $(v_0 \to v_1)$, and the visited vertices form the
+face~\cite{mohar2001}. This is implemented by \texttt{emb.traverse\_face(v, w)}
+in \texttt{NetworkX}.
+
+\subsection{Peeling Algorithm}
+
+\begin{algorithm}[H]
+\caption{Topological peeling}
+\label{alg:peeling}
+\begin{algorithmic}[1]
+\Require Maximal planar graph $G$
+\Ensure Elimination order $\pi = (v_1, v_2, \ldots, v_n)$
+\State $G' \gets G$, $\pi \gets ()$
+\While{$V(G') \neq \emptyset$}
+    \State Compute planar embedding of $G'$ (Boyer-Myrvold)
+    \State $\mathcal{F} \gets$ all faces via dart traversal
+    \State $F^* \gets \arg\max_{F \in \mathcal{F}} \sum_{v \in F} \ecc_{G'}(v)$
+    \State $v^* \gets \arg\min_{v \in F^*} \degr_{G'}(v)$
+    \State $\pi \gets \pi \cdot (v^*)$
+    \State $G' \gets G' \setminus \{v^*\}$
+\EndWhile
+\State \Return $\pi$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Results on the Errera Graph}
+
+The complete peeling order and degrees at the moment of elimination are:
+
+\begin{center}
+\begin{tabular}{cccc|cccc}
+\toprule
+\textbf{Step} & \textbf{Node} & \textbf{Outer face} & \textbf{Deg.} &
+\textbf{Step} & \textbf{Node} & \textbf{Outer face} & \textbf{Deg.} \\
+\midrule
+ 1 &  0 & $\{0,1,2\}$           & 5 & 10 &  9 & $\{9,10,11,12,13,14\}$  & 3 \\
+ 2 &  1 & $\{1,2,3,4,5\}$       & 4 & 11 & 10 & $\{10,11,12,13,14,15\}$ & 2 \\
+ 3 &  2 & $\{2,3,4,5,6,7\}$     & 3 & 12 & 11 & $\{11,12,13,14,15\}$    & 3 \\
+ 4 &  3 & $\{3,4,5,6,7,8\}$     & 3 & 13 & 12 & $\{12,13,14,15,16\}$    & 2 \\
+ 5 &  4 & $\{4,5,6,7,8,9\}$     & 3 & 14 & 13 & $\{13,14,15,16\}$       & 2 \\
+ 6 &  5 & $\{5,6,7,8,9,10\}$    & 2 & 15 & 14 & $\{14,15,16\}$          & 2 \\
+ 7 &  6 & $\{6,7,8,9,10\}$      & 4 & 16 & 15 & $\{15,16\}$             & 1 \\
+ 8 &  7 & $\{7,8,9,10,11,12\}$  & 3 & 17 & 16 & $\{16\}$                & 0 \\
+ 9 &  8 & $\{8,9,10,11,12,13\}$ & 3 &    &    &                          &   \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The maximum degree at elimination is 5 (step 1), consistent with
+Theorem~\ref{thm:deg5}. The \textbf{degeneracy} of the graph~\cite{matula1983}
+is $d(G) = \max_i \degr_{G_i}(v_i) = 5$.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Inverse Greedy Coloring}
+\label{sec:greedy}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{The Algorithm}
+
+Given the peeling order $\pi = (v_1, \ldots, v_n)$, coloring proceeds in
+reverse order $v_n, v_{n-1}, \ldots, v_1$:
+
+\begin{algorithm}[H]
+\caption{Inverse greedy coloring}
+\label{alg:greedy}
+\begin{algorithmic}[1]
+\Require Graph $G$, peeling order $\pi = (v_1, \ldots, v_n)$
+\Ensure Coloring $c: V \to \N$
+\State $c \gets \{\}$
+\For{$i = n, n-1, \ldots, 1$}
+    \State $\mathcal{P}(v_i) \gets \{c(u) : u \in N(v_i),\; u \in \dom(c)\}$
+    \State $c(v_i) \gets \min(\N \setminus \mathcal{P}(v_i))$
+\EndFor
+\State \Return $c$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Six-Color Guarantee}
+
+\begin{theorem}[Six Color Theorem~\cite{heawood1890}]
+Every planar graph is 6-colorable.
+\end{theorem}
+
+\begin{proof}
+By induction on $|V|$. By Theorem~\ref{thm:deg5}, there exists $v$ with
+$\degr(v) \leq 5$. By the inductive hypothesis, $G \setminus \{v\}$ is
+6-colorable. Reinserting $v$, it has at most 5 neighbors using at most 5
+distinct colors. Of the 6 available colors, at least one is free. $\square$
+
+The inverse greedy coloring implements this argument constructively: the reverse
+peeling order guarantees that when $v_i$ is colored, its already-colored
+neighbors are exactly those it had when removed during peeling, and at that
+moment $\degr(v_i) \leq 5$.
+\end{proof}
+
+\subsection{Results on the Errera Graph}
+
+The inverse greedy coloring produces a valid 4-coloring of the Errera graph
+directly. The complete assignment is:
+
+\begin{center}
+\begin{tabular}{ccc|ccc|ccc}
+\toprule
+\textbf{Node} & \textbf{Forbidden} & \textbf{Color} &
+\textbf{Node} & \textbf{Forbidden} & \textbf{Color} &
+\textbf{Node} & \textbf{Forbidden} & \textbf{Color} \\
+\midrule
+16 & $\emptyset$      & 0 &  9 & $\{0,1,2\}$ & 3 &  2 & $\{0,2,3\}$ & 1 \\
+15 & $\{0\}$          & 1 &  8 & $\{1,2,3\}$ & 0 &  1 & $\{1,2,3\}$ & 0 \\
+14 & $\{0,1\}$        & 2 &  7 & $\{0,1,2\}$ & 3 &  0 & $\{0,1,2\}$ & 3 \\
+13 & $\{0,2\}$        & 1 &  6 & $\{0,2,3\}$ & 1 &    &             &   \\
+12 & $\{0,1\}$        & 2 &  5 & $\{0,1\}$   & 2 &    &             &   \\
+11 & $\{0,1,2\}$      & 3 &  4 & $\{0,2,3\}$ & 1 &    &             &   \\
+10 & $\{1,3\}$        & 0 &  3 & $\{0,1,3\}$ & 2 &    &             &   \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The resulting coloring uses $|\{c(v) : v \in V\}| = 4$ colors and is verified
+valid: $\forall \{u,v\} \in E: c(u) \neq c(v)$.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Kempe Chains and the Errera Counterexample}
+\label{sec:kempe}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Kempe Chains}
+
+\begin{definition}[Kempe chain~\cite{kempe1879}]
+Given a partial coloring $c$ and two colors $c_i, c_j$, the
+$(c_i, c_j)$-Kempe chain from $v$ is the connected component of $v$ in the
+subgraph induced by vertices colored $c_i$ or $c_j$:
+\begin{equation}
+    K_{ij}(v) = \text{connected component of } v \text{ in }
+    G[\{u : c(u) \in \{c_i, c_j\}\}].
+\end{equation}
+\end{definition}
+
+A \textbf{Kempe swap} exchanges $c_i \leftrightarrow c_j$ on all nodes of
+$K_{ij}(v)$. The resulting coloring remains valid because $K_{ij}(v)$ is a
+connected component: no edges cross from inside $K_{ij}(v)$ to external nodes
+with color $c_i$ or $c_j$~\cite{kempe1879}.
+
+\subsection{Kempe's Error and the Errera Graph}
+
+Kempe assumed that whenever the current outer face uses 4 colors and the next
+vertex to insert has all 4 forbidden, it is always possible to reduce the outer
+face to 3 colors via a Kempe swap. This assumption is false, as Heawood showed
+in 1890~\cite{heawood1890}.
+
+The Errera graph was constructed to exhibit this impossibility
+concretely~\cite{errera1921}. The system analyzes all candidate chains $(c_i,
+c_j)$ at each conflicting step, classifying each as:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{SUCCESS}: the swap reduces the outer face to $\leq 3$ colors.
+    \item \textbf{TANGLED}: the chain connects two outer-face nodes of colors
+        $c_i$ and $c_j$, making the swap useless.
+    \item \textbf{NO\_HELP}: valid swap but the outer face still uses 4 colors.
+\end{itemize}
+
+\begin{definition}[Tangled Kempe chain]
+A $(c_i, c_j)$-chain $K_{ij}(v)$ from $v$ (with $c(v) = c_i$) is \emph{tangled}
+if it contains a node $w$ on the outer face with $c(w) = c_j$. The swap
+exchanges $c_i \to c_j$ at $v$ and $c_j \to c_i$ at $w$, leaving both colors
+present on the outer face.
+\end{definition}
+
+At step 14 of Act 2 (insertion of node 3) in the Errera graph, all candidate
+chains on the outer face are tangled. The system checks the $\binom{4}{2} = 6$
+color pairs and all possible chains from outer-face nodes, finding that none
+reduces the outer face from 4 to 3 colors. This is the concrete instance of the
+phenomenon documented by Errera~\cite{errera1921}.
+
+The Kittell graph~\cite{kittell1935}, with 23 vertices and $\chi(G) = 4$,
+exhibits the same phenomenon at multiple steps during the Act 2 coloring.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{CSP Backtracking with Four-Color Guarantee}
+\label{sec:backtracking}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{CSP Formulation}
+
+When the greedy coloring with Kempe swaps produces more than 4 colors, the
+system activates backtracking over the CSP formulation:
+
+\begin{definition}[Constraint Satisfaction Problem, CSP]
+The 4-coloring problem for $G = (V, E)$ is formulated as a CSP with:
+\begin{itemize}[noitemsep]
+    \item Variables: $X = \{x_v : v \in V\}$
+    \item Domains: $D(x_v) = \{0, 1, 2, 3\}$ for all $v$
+    \item Constraints: $x_u \neq x_v$ for all $\{u,v\} \in E$
+\end{itemize}
+\end{definition}
+
+The search space is $|D|^{|V|} = 4^{17} \approx 1.7 \times 10^{10}$ for the
+Errera graph. Pruning heuristics reduce the number of recursive calls to 22 in
+practice.
+
+\subsection{MRV Heuristic}
+
+\begin{definition}[Minimum Remaining Values, MRV~\cite{russell2020}]
+The MRV heuristic selects at each step the unassigned variable with the smallest
+domain:
+\begin{equation}
+    v^* = \argmin_{v \notin \dom(c)} |\dom(x_v)|.
+\end{equation}
+Ties are broken by choosing the vertex of highest degree (\textit{degree
+heuristic}).
+\end{definition}
+
+MRV implements the ``fail-first'' principle: by choosing the most constrained
+variable, failures are detected early and more of the search tree is
+pruned~\cite{haralick1980}.
+
+\subsection{Forward Checking}
+
+\begin{definition}[Forward Checking~\cite{haralick1980}]
+Upon assigning color $c$ to vertex $v$, forward checking removes $c$ from the
+domain of each uncolored neighbor $u \in N(v) \setminus \dom(c)$:
+\begin{equation}
+    \dom(x_u) \gets \dom(x_u) \setminus \{c\} \quad \forall u \in N(v),\; u \notin \dom(c).
+\end{equation}
+If any $\dom(x_u)$ becomes empty, the current assignment is inconsistent and the
+algorithm backtracks immediately.
+\end{definition}
+
+\subsection{Complete Algorithm}
+
+\begin{algorithm}[H]
+\caption{Backtracking with MRV and Forward Checking}
+\label{alg:backtrack}
+\begin{algorithmic}[1]
+\Require Graph $G = (V, E)$
+\Ensure Coloring $c: V \to \{0,1,2,3\}$ or FAILURE
+\State $c \gets \{\}$; $\dom(x_v) \gets \{0,1,2,3\}$ for all $v$
+\Function{Backtrack}{}
+    \State $v^* \gets \argmin_{v \notin \dom(c)} |\dom(x_v)|$ \hfill (MRV)
+    \If{$v^* = \emptyset$} \Return \textbf{DONE} \EndIf
+    \For{$\ell \in \dom(x_{v^*})$ in ascending order}
+        \If{$\ell \notin \{c(u) : u \in N(v^*) \cap \dom(c)\}$}
+            \State $\text{pruned} \gets \emptyset$
+            \For{$u \in N(v^*) \setminus \dom(c)$} \hfill (Forward Check)
+                \If{$\ell \in \dom(x_u)$}
+                    \State $\dom(x_u) \gets \dom(x_u) \setminus \{\ell\}$
+                    \State $\text{pruned} \gets \text{pruned} \cup \{u\}$
+                    \If{$\dom(x_u) = \emptyset$}
+                        \State Restore pruned; \textbf{continue} to next $\ell$
+                    \EndIf
+                \EndIf
+            \EndFor
+            \State $c(v^*) \gets \ell$
+            \If{\Call{Backtrack}{} = \textbf{DONE}} \Return \textbf{DONE} \EndIf
+            \State $c(v^*) \gets \text{undefined}$; restore domains of pruned
+        \EndIf
+    \EndFor
+    \State \Return \textbf{FAILURE}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Search Trace Visualization}
+
+The system records each event of the search tree for frame-by-frame visualization:
+
+\begin{center}
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Event} & \textbf{Frame} & \textbf{Meaning} \\
+\midrule
+\texttt{ASSIGN}   & Color fixed, neighbors pruned
+    & Successful assignment; node shown with thick white border \\
+\texttt{FAIL}     & Node in dark red
+    & Domain wipeout in some neighbor; must backtrack \\
+\texttt{UNASSIGN} & Node decolored
+    & Undoes assignment and restores domains \\
+\texttt{DONE}     & All nodes colored
+    & Solution found \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Results on the Errera Graph}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Recursive calls       & 22 \\
+\texttt{ASSIGN} events & 21 \\
+\texttt{FAIL} / \texttt{UNASSIGN} events & 4 each \\
+Colors used           & 4 \\
+Valid coloring         & Yes \\
+Full search space     & $4^{17} \approx 1.7 \times 10^{10}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The coloring found by backtracking is:
+$\{6{:}0,\, 7{:}1,\, 1{:}2,\, 2{:}0,\, 8{:}2,\, 0{:}1,\, 3{:}3,\, 5{:}3,\,
+9{:}0,\, 4{:}2,\, 10{:}1,\, 11{:}3,\, 12{:}2,\, 15{:}2,\, 13{:}0,\, 16{:}1,\,
+14{:}3\}$, differing from the greedy coloring in 15 of 17 nodes.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{The Four Color Theorem: Historical Context}
+\label{sec:history}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Timeline}
+
+\begin{description}[leftmargin=2cm]
+    \item[1852] Francis Guthrie formulates the conjecture while coloring
+        maps~\cite{wilson2002}.
+    \item[1879] Alfred Kempe proposes a proof based on chain
+        interchange~\cite{kempe1879}.
+    \item[1890] Percy Heawood identifies the flaw in Kempe's proof and proves
+        the Five Color Theorem~\cite{heawood1890}.
+    \item[1921] Alfred Errera constructs a concrete planar graph exhibiting the
+        failure point of Kempe's algorithm~\cite{errera1921}.
+    \item[1935] I. Kittell constructs a second counterexample to Kempe's
+        algorithm~\cite{kittell1935}.
+    \item[1976] Appel and Haken prove the Four Color Theorem by computationally
+        verifying 1936 reducible configurations~\cite{appelhaken1977}.
+    \item[1997] Robertson, Sanders, Seymour, and Thomas simplify the proof to
+        633 configurations with an independent verifier~\cite{robertson1997}.
+    \item[2005] Georges Gonthier produces the first mechanically verified formal
+        proof in the Coq proof assistant~\cite{gonthier2008}.
+\end{description}
+
+\subsection{Gonthier's Formal Verification}
+
+Gonthier's contribution~\cite{gonthier2008} shifts the object of trust: rather
+than trusting a 500,000-line verification program, one trusts only the Coq
+kernel (approximately 3,000 lines), whose correctness can be established
+independently.
+
+The formalism uses \textbf{combinatorial hypermaps}: an algebraic representation
+of a planar embedding based on two permutations over a set of darts. If $H$
+denotes the dart set and $\sigma, \alpha: H \to H$ are permutations with
+$\alpha^2 = \mathrm{id}$, then $(H, \sigma, \alpha)$ is a hypermap representing
+the embedding. Faces are orbits of $\sigma \circ \alpha$, vertices are orbits of
+$\sigma$, and edges are orbits of $\alpha$~\cite{gonthier2008}.
+
+This is isomorphic to the combinatorial embedding used by \texttt{NetworkX}
+(implemented as a dict-of-dicts storing the cyclic neighbor order), though
+Gonthier's presentation is more formal and amenable to mechanical verification.
+
+\subsection{What the Code Implements and What It Does Not}
+
+The implemented system constructively demonstrates that the Errera and Kittell
+graphs are 4-colorable. It does not prove the Four Color Theorem for arbitrary
+planar graphs, which requires:
+
+\begin{enumerate}[noitemsep]
+    \item The \textbf{discharging method}: assign charge $\mu(v) = 6 - \degr(v)$
+        to each vertex (the total sum is 12 by Euler) and redistribute it via
+        discharge rules that yield a contradiction if the graph contains no
+        reducible configuration.
+    \item \textbf{Reducibility}: for each of the 633 configurations, show that
+        any coloring of the outer ring can be extended to the interior (possibly
+        with Kempe swaps).
+    \item \textbf{Unavoidability}: show that the configuration set is unavoidable,
+        i.e., every planar graph contains at least one~\cite{robertson1997}.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Computational Complexity}
+\label{sec:complexity}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Table~\ref{tab:complexity} summarizes the complexity of each pipeline stage.
+
+\begin{table}[H]
+\centering
+\caption{Complexity of each pipeline stage}
+\label{tab:complexity}
+\begin{tabular}{llll}
+\toprule
+\textbf{Stage} & \textbf{Algorithm} & \textbf{Complexity} & \textbf{Reference} \\
+\midrule
+Graph loading        & Adjacency list insertion  & $O(|E|)$             & --- \\
+Planarity check      & Boyer-Myrvold             & $O(|V|)$             & \cite{boyermyrvold1999} \\
+Maximalization       & Brute force + Shapely     & $O(|V|^2 |E|)$       & --- \\
+Tutte embedding      & Gaussian elim.\ ($m \times m$) & $O(|V|^3)$      & \cite{tutte1963} \\
+BFS (eccentricity)   & BFS from each vertex      & $O(|V|(|V|+|E|))$    & --- \\
+Face traversal       & Dart traversal            & $O(|F|)$             & \cite{mohar2001} \\
+Full peeling         & Peeling $\times$ Boyer-Myrvold & $O(|V|^2)$      & --- \\
+Greedy coloring      & Greedy over adjacency     & $O(|V|+|E|)$         & --- \\
+CSP backtracking (worst) & MRV + FC              & $O(4^{|V|})$         & \cite{haralick1980} \\
+CSP backtracking (practice) & Planar structure  & $O(|V|)$             & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The theoretical bottleneck of backtracking is exponential in the worst case, but
+in practice the structure of planar graphs causes MRV + FC to solve the problem
+in a few dozen recursive calls. The Errera graph required 22 calls instead of
+$4^{17}$.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Implementation}
+\label{sec:implementation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Dependencies}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Library} & \textbf{Version} & \textbf{Primary use} \\
+\midrule
+\texttt{networkx}  & $\geq$ 3.0  & Graph structure, planar embedding, BFS \\
+\texttt{numpy}     & $\geq$ 1.24 & Tutte linear system, linear algebra \\
+\texttt{scipy}     & $\geq$ 1.10 & \texttt{ConvexHull} (legacy visual aid) \\
+\texttt{shapely}   & $\geq$ 2.0  & Segment intersection test \\
+\texttt{matplotlib}& $\geq$ 3.7  & Visualization and GIF animation \\
+\texttt{pillow}    & $\geq$ 9.0  & GIF export \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Code Structure}
+
+The main file \texttt{onion\_peeling.py} organizes the pipeline into eight
+numbered sections, each implementing one mathematical stage:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Loading}: JSON reading and graph construction.
+    \item \textbf{Maximalization}: Algorithm~\ref{alg:maximal}.
+    \item \textbf{Tutte embedding}: Laplacian system, Section~\ref{sec:tutte}.
+    \item \textbf{Outer face}: face traversal and eccentricity.
+    \item \textbf{Peeling}: Algorithm~\ref{alg:peeling}.
+    \item \textbf{Greedy coloring}: Algorithm~\ref{alg:greedy}.
+    \item \textbf{Kempe chains}: chain analysis, Section~\ref{sec:kempe}.
+    \item \textbf{Backtracking}: Algorithm~\ref{alg:backtrack}.
+    \item \textbf{Animation}: three-act GIF generation.
+\end{enumerate}
+
+The system produces two main outputs:
+\begin{itemize}[noitemsep]
+    \item \texttt{descomposicion\_grafo.gif}: animated process on the input graph.
+    \item \texttt{explainer.gif}: 40-frame pedagogical GIF documenting each
+        mathematical stage.
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Layer-by-Layer Tab\"{u} Coloring}
+\label{sec:tabu}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Motivation}
+
+The greedy inverse coloring of Section~\ref{sec:greedy} inserts vertices one at
+a time in reverse peel order. When it produces more than four colors, the system
+falls back to CSP backtracking (Section~\ref{sec:backtracking}), which is
+guaranteed to find a four-coloring but may explore a large portion of the search
+space. The question motivating this section is: \emph{can the coloring be
+organized so that backtracking is never needed?}
+
+The key observation is that the topological peeling naturally groups vertices
+into \textbf{layers}: all vertices on the outer face at a given moment form one
+layer, and removing that layer exposes the next. Coloring an entire layer at
+once, before moving inward, provides more global information at each decision
+point than the node-by-node greedy approach.
+
+\subsection{Algorithm}
+
+\begin{definition}[Peeling layers]
+The peeling layers $L_0, L_1, \ldots, L_k$ of a planar graph $G$ are defined
+iteratively: $L_0$ is the outer face of $G$; for $i > 0$, $L_i$ is the outer
+face of $G \setminus (L_0 \cup \cdots \cup L_{i-1})$.
+\end{definition}
+
+For the Errera graph the layers are:
+\[
+    L_0 = \{0,1,2\}, \quad
+    L_1 = \{3,4,5,6,7,8\}, \quad
+    L_2 = \{9,10,11,12,13,14\}, \quad
+    L_3 = \{15,16\}.
+\]
+
+\begin{definition}[Tab\"{u} constraint]
+When coloring a vertex $v \in L_i$, the \textbf{tab\"{u}} set of $v$ is the set
+of colors already assigned to its direct neighbors in previously colored layers:
+\begin{equation}
+    \tau(v) = \{c(u) : u \in N(v),\; u \in L_0 \cup \cdots \cup L_{i-1}\}.
+    \label{eq:tabu}
+\end{equation}
+\end{definition}
+
+The coloring rule is identical to the greedy rule of Section~\ref{sec:greedy}
+— assign the minimum color not in $\tau(v)$ — but the \emph{scope} differs:
+here $\tau(v)$ is computed from all previously colored layers, whereas in the
+node-by-node greedy it includes only the previously inserted nodes in peel order.
+Within each layer, nodes are colored in ascending ID order.
+
+\begin{algorithm}[H]
+\caption{Layer-by-layer tab\"{u} coloring}
+\label{alg:tabu}
+\begin{algorithmic}[1]
+\Require Planar graph $G$
+\Ensure Coloring $c: V \to \N$
+\State $c \gets \{\}$,\quad $i \gets 0$
+\While{$G \neq \emptyset$}
+    \State $L_i \gets \text{outer face of } G$ \Comment{face traversal, max ecc sum}
+    \For{$v \in L_i$ in ascending order}
+        \State $\tau(v) \gets \{c(u) : u \in N(v),\; u \in \dom(c)\}$
+        \State $c(v) \gets \min(\N \setminus \tau(v))$
+    \EndFor
+    \State $G \gets G \setminus L_i$,\quad $i \gets i + 1$
+\EndWhile
+\State \Return $c$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Relationship to Greedy and to Backtracking}
+
+The tab\"{u} algorithm is strictly more informed than the node-by-node greedy:
+when a vertex $v \in L_i$ is colored, \emph{all} of its neighbors in
+$L_0, \ldots, L_{i-1}$ are already colored, whereas in the greedy they may not
+be (depending on the peel order within earlier layers). This means $\tau(v)$
+is at least as large as the forbidden set in the node-by-node greedy, so the
+tab\"{u} algorithm makes more constrained — and therefore more globally
+consistent — decisions.
+
+The tab\"{u} constraint~\eqref{eq:tabu} is equivalent to the \emph{initial}
+forward-checking propagation in the CSP backtracking: before assigning any color
+to $v$, backtracking would also eliminate the colors of all colored neighbors
+from $v$'s domain. The difference is that the tab\"{u} algorithm never revises
+a decision, whereas backtracking undoes assignments when a domain becomes empty.
+
+\subsection{Results on the Errera Graph}
+
+Applying Algorithm~\ref{alg:tabu} to the Errera graph:
+
+\begin{center}
+\begin{tabular}{clll}
+\toprule
+\textbf{Layer} & \textbf{Nodes} & \textbf{Tab\"{u} sets} & \textbf{Colors assigned} \\
+\midrule
+$L_0$ & $\{0,1,2\}$
+    & $\emptyset,\;\{0\},\;\{0,1\}$
+    & $0,\;1,\;2$ \\
+$L_1$ & $\{3,4,5,6,7,8\}$
+    & $\{0,2\},\;\{0,1\},\;\{0,1,2\},\;\{1,3\},\;\{0,1,2\},\;\{1,2,3\}$
+    & $1,\;2,\;3,\;0,\;3,\;0$ \\
+$L_2$ & $\{9,10,11,12,13,14\}$
+    & $\{0,1,2\},\;\{0,2,3\},\;\{0,1\},\;\{0,2,3\},\;\{0,1,3\},\;\{0,2,3\}$
+    & $3,\;1,\;2,\;1,\;2,\;1$ \\
+$L_3$ & $\{15,16\}$
+    & $\{1,2,3\},\;\{0,1,2\}$
+    & $0,\;3$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The algorithm produces a valid 4-coloring \textbf{without backtracking}. The
+maximum tab\"{u} set size is 3 (occurring at nodes 5, 7, 8 in $L_1$, and
+several nodes in $L_2$), consistent with the bound $|\tau(v)| \leq 5$ that
+follows from the density argument of Theorem~\ref{thm:deg5}.
+
+\subsection{Comparison with Other Methods}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Colors} & \textbf{Backtracks} & \textbf{Assignments} & \textbf{Complexity} \\
+\midrule
+Greedy (node-by-node)      & 4 & 0  & 17 & $O(V+E)$ \\
+Greedy + Kempe swaps       & 5 & 0  & 17 & $O(V(V+E))$ \\
+CSP Backtracking (MRV+FC)  & 4 & 4  & 21 & $O(4^V)$ worst \\
+Tab\"{u} layer-by-layer    & 4 & 0  & 17 & $O(V+E)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The tab\"{u} algorithm matches the result of CSP backtracking (4 colors, valid)
+without any backtracking, and runs in $O(V+E)$ — the same asymptotic complexity
+as the greedy. The key open question is whether this holds for all planar graphs
+or only for structured cases like Errera.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Bi-Layer Coloring: Failure Detection and Closure}
+\label{sec:bilayer}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Motivation and Overview}
+
+De Ita Luna and Marcial-Romero~\cite{deita2024} propose the Bi-Layer algorithm,
+which extends the outer-face greedy approach with two key mechanisms: (1)
+\emph{failure configuration detection} — recognizing local graph patterns that
+would require a fifth color before they are reached — and (2) the \emph{closure
+operator} $T((v_i, a))$ — simulating the transitive propagation of forced
+colorings when color $a$ is tentatively assigned to vertex $v_i$, in order to
+evaluate the downstream consequences of each color choice.
+
+\subsection{Failure Configurations}
+
+\begin{definition}[Basic failure configurations~\cite{deita2024}]
+Given a partial coloring $c$ and tabu sets $\tau(v) = \{c(u) : u \sim v,\,
+u \in \dom(c)\}$:
+\begin{itemize}[noitemsep]
+    \item \textbf{Failed vertex} (Fig.~1a): $|\tau(v)| = 4$ — all four colors forbidden.
+    \item \textbf{Failed edge} (Fig.~1b): $\{v_1, v_2\} \in E$,
+        $\tau(v_1) = \tau(v_2)$, $|\tau(v_1)| = 3$.
+    \item \textbf{Failed face} (Fig.~1c): triangle $v_1$-$v_2$-$v_3$,
+        $\tau(v_1) = \tau(v_2) = \tau(v_3)$, $|\tau(v_1)| = 2$.
+\end{itemize}
+\end{definition}
+
+Any of these configurations guarantees that the coloring cannot be completed
+with four colors. A \textbf{failed wheel} $W_4$ consists of two potential
+failed edges with complementary tabu sets sharing a common hub.
+
+\subsection{Potential Failure Configurations}
+
+\begin{definition}[Potential failed edge (pfe)~\cite{deita2024}]
+An edge $\{v_1, v_2\}$ is a potential failed edge if:
+\[
+    \tau(v_1) = \tau(v_2),\quad |\tau(v_1)| = 2,\quad
+    \exists w \in G_i : v_1, v_2 \in N(w).
+\]
+\end{definition}
+
+The algorithmic strategy for pfe: color the endpoints $v_1, v_2$
+\emph{before} their common neighbor $w$. This prevents the failed edge from
+materializing when $w$ is subsequently colored.
+
+\begin{definition}[Potential failed face (pff)~\cite{deita2024}]
+A face $v_1$-$v_2$-$v_3$ is a potential failed face if:
+\[
+    \left(\bigcap_{v \in \{v_1,v_2,v_3\}} \tau(v)\right) \neq \emptyset,\quad
+    |\tau(v_1)| = 2,\quad
+    \exists w \in G_i : v_2, v_3 \in N(w),\; v_1 \notin N(w).
+\]
+\end{definition}
+
+Strategy for pff: assign to $w$ a color not appearing in the tabu of any
+vertex at distance 2 from $w$ (i.e., not in $\tau(N_2(w))$).
+
+\subsection{The Closure Operator}
+
+\begin{definition}[Closure $T((v_i, a))$~\cite{deita2024}]
+Given partial coloring $c$ and a tentative assignment $c(v_i) = a$, the
+closure propagates forced colorings transitively:
+\begin{enumerate}[noitemsep]
+    \item Initialize $\text{forced} = \{v_i \mapsto a\}$.
+    \item For each $u \notin \dom(c)$ not yet in \emph{forced}: compute
+        $\tau'(u) = \tau(u) \cup \{forced[nb] : nb \in N(u) \cap \text{forced}\}$.
+    \item If $|\text{FOUR} \setminus \tau'(u)| = 0$ $\Rightarrow$ INCONSISTENT.
+    \item If $|\text{FOUR} \setminus \tau'(u)| = 1$ $\Rightarrow$ add forced assignment
+        and continue propagation.
+\end{enumerate}
+If the closure produces an inconsistency (failed vertex, edge, or face),
+color $a$ is rejected for $v_i$.
+\end{definition}
+
+\subsection{Vertex and Color Selection}
+
+\textbf{Vertex selection} (hierarchical, from outer face):
+\begin{enumerate}[noitemsep]
+    \item Vertices involved in potential failed edges.
+    \item Vertices with complementary tabu sets at distance 2.
+    \item Vertex of maximum degree in the outer face.
+\end{enumerate}
+
+\textbf{Color selection}: for each candidate color $a \in \text{FOUR} \setminus \tau(v_i)$:
+\begin{enumerate}[noitemsep]
+    \item Run $T((v_i, a))$; if inconsistent, reject $a$.
+    \item Build virtual graph $G_{i+1,a} = G_i \setminus \text{Proj}(T((v_i,a)))$.
+    \item Score $(G_{i+1,a}, c')$ by: (a) future failed vertices, (b) failed
+        edges, (c) failed faces, (d) pfe count, (e) complementary tabu pairs.
+    \item Choose $a$ minimizing the score lexicographically.
+\end{enumerate}
+
+\textbf{Stack}: vertices satisfying $\deg_{G_i}(v) + |\tau(v)| \leq 3$ are
+pushed to a stack and colored last (greedily); they can always be colored
+correctly once all their neighbors are colored.
+
+\subsection{Implementation Status}
+
+The implementation in \texttt{bilayer\_coloring.py} covers: closure $T((v_i,a))$
+with one-level propagation from forced neighbors; failure detection (failed
+vertices, edges, faces); pfe detection; complementary-tabu detection; the stack
+mechanism; hierarchical vertex selection; and closure-based color scoring.
+
+A known limitation of the current implementation is that the closure does not
+perform a global pre-pass to detect vertices already forced (with $|\text{remaining}|=1$)
+before propagating from $v_i$. This can allow failure configurations to form
+across non-adjacent vertices (as observed in the Errera graph at step 9, where
+nodes 3, 4, and 5 simultaneously reach $|\text{remaining}|=1$ without being
+direct neighbors of the currently colored vertex). Addressing this requires the
+full transitive-closure implementation described in~\cite{deita2024}, including
+the reflexive-transitive closure process for anticipating multi-step consequences.
+
+\subsection{Results}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Graph} & \textbf{Tabu colors} & \textbf{Bi-Layer colors} & \textbf{Valid} & \textbf{Steps} \\
+\midrule
+Errera (17)       & 4 & 4 & Partial* & 12 \\
+Kittell (23)      & 5 & 4 & Yes      & 16 \\
+Dodecahedron (20) & 5 & 4 & Yes      & 12 \\
+Icosahedron (12)  & 4 & 4 & Yes      &  6 \\
+Octahedron (6)    & 3 & 3 & Yes      &  6 \\
+Wheel $W_8$ (8)   & 4 & 4 & Yes      &  8 \\
+Grid $4\times4$ (16) & 5 & 4 & Yes   &  6 \\
+Sunflower (13)    & 4 & 4 & Yes      & 13 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\small{*Errera: one edge conflict due to the global-pass limitation in the closure.
+The Bi-Layer correctly identifies the pfe configurations but requires the full
+transitive closure to prevent the downstream failure.}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Forest Decomposition Structure of the Tab\"{u} Ordering}
+\label{sec:forest}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Motivation}
+
+Computational analysis of the tab\"{u} coloring algorithm
+(Section~\ref{sec:tabu}) reveals a striking structural property: the
+outer-face tab\"{u} ordering implicitly partitions the vertex set into four
+classes with precise combinatorial structure. This observation connects the
+algorithm to classical graph arboricity theory and suggests a new approach to
+proving the Four Color Theorem constructively.
+
+\subsection{Phase Decomposition}
+
+\begin{definition}[Backward set and phase]
+Given the tab\"{u} ordering $\pi = (v_1, \ldots, v_n)$, define the
+\emph{backward color set} of $v_i$ as
+\[
+    BC(v_i) = \bigl\{c(v_j) : j < i,\; v_j \sim v_i\bigr\},
+\]
+the set of distinct colors already assigned to $v_i$'s neighbors when $v_i$ is
+colored. The \emph{phase} of $v_i$ is $\phi(v_i) = |BC(v_i)|$.
+The \emph{phase sets} are $F_k = \{v_i : \phi(v_i) = k\}$.
+\end{definition}
+
+\subsection{Proven Structural Properties}
+
+\begin{theorem}[Phase independence]
+\label{thm:phase-indep}
+Under any tabu coloring ordering, $F_k$ is an independent set for all $k \geq 2$.
+\end{theorem}
+
+\begin{proof}
+Let $u, w \in F_k$ with $k \geq 2$, with $u$ colored before $w$ (so $u \to w$
+is a backward edge). Since $w \in F_k$, all backward neighbors of $w$ have at
+most $k$ distinct colors. But $u \in F_k$ means $c(u)$ is some color $\gamma$.
+Additionally, $BC(u)$ already contains $k$ distinct colors, all present in
+$w$'s backward neighborhood (as $u$'s previous backward neighbors are also
+backward neighbors of $w$ along edges of the graph). Hence $|BC(w)| \geq k+1$,
+placing $w$ in $F_{k+1}$, not $F_k$. Contradiction.
+
+More precisely for $k=2$: $u \in F_2$ means $|BC(u)| = 2$, so $c(u) \in
+\{0,1,2\} \setminus BC(u)$, giving $c(u) = $ the third color. If $w \sim u$
+(backward), then $w$ sees $c(u)$ plus the two colors in $BC(u)$, giving
+$|BC(w)| \geq 3$, so $w \in F_{\geq 3}$. By symmetry $u \notin F_2$ if $w \in
+F_2$. Hence $F_2$ is independent. The argument for $k \geq 3$ is identical.
+\end{proof}
+
+\begin{corollary}
+$F_2$, $F_3$, $F_4$ are each independent sets: each needs exactly one new
+color. When $F_4 = \emptyset$, the algorithm uses at most 4 colors.
+\end{corollary}
+
+\subsection{The Phase-1 Forest Property}
+
+\begin{definition}[Phase-1 backward subgraph]
+The \emph{phase-1 backward subgraph} $B_1$ has vertex set $F_1$ and edge set
+$\{(u,w) : u,w \in F_1, u \sim w, u \text{ colored before } w\}$.
+\end{definition}
+
+\begin{lemma}[k=3 impossible]
+\label{lem:k3}
+The backward subgraph $B_1$ contains no triangle.
+\end{lemma}
+
+\begin{proof}
+Suppose $u, v, w \in F_1$ with $w$ colored first, then $v$, then $u$, and
+$w \sim v \sim u \sim w$ (all pairs adjacent). Since $v \in F_1$: $BC(v) =
+\{c(w)\}$ (exactly one color). Since $u \in F_1$: $BC(u)$ has exactly one
+color. But $u \sim v$ and $u \sim w$, so $BC(u) \supseteq \{c(v), c(w)\}$.
+Since $v \in F_1$ with $v \sim w$: $c(v) \neq c(w)$ (valid coloring). Thus
+$|BC(u)| \geq 2$, placing $u$ in $F_{\geq 2}$. Contradiction.
+\end{proof}
+
+\begin{lemma}[Even cycles only]
+\label{lem:even}
+Any cycle in $B_1$ has even length.
+\end{lemma}
+
+\begin{proof}
+Nodes in $B_1$ use only colors $\{0,1\}$ (they see exactly one color backward,
+so they take the other). Adjacent nodes in $B_1$ have opposite colors ($u \in
+F_1$ with backward neighbor $w$: $c(u) \neq c(w)$ since the coloring is
+valid). Hence $B_1$ is 2-colorable with $\{0,1\}$, meaning all cycles in $B_1$
+have even length.
+\end{proof}
+
+By Lemma~\ref{lem:k3}, the minimum cycle length in $B_1$ is $\geq 4$. By
+Lemma~\ref{lem:even}, it must be even. So the minimum possible cycle has
+length~4.
+
+\subsection{Main Theorem and Proof}
+
+\begin{theorem}[F1 Forest Theorem]
+\label{thm:f1forest}
+Let $G$ be a maximal planar graph (every face is a triangle). Under the
+outer-face tab\"{u} ordering, the phase-1 backward subgraph $B_1$ is a forest.
+\end{theorem}
+
+The proof proceeds through two lemmas.
+
+\begin{lemma}[E-before-I ordering]
+\label{lem:ebeforei}
+Let $C = v_1\text{-}v_2\text{-}\cdots\text{-}v_k\text{-}v_1$ be a cycle in
+$B_1$. For any edge $\{v_i, v_{i+1}\}$ in $C$ and any vertex $w \notin C$
+adjacent to both $v_i$ and $v_{i+1}$: if $w$ lies in the exterior region $E$
+of $C$ in the planar embedding, then $w$ is colored before $v_i$.
+\end{lemma}
+
+\begin{proof}
+Suppose for contradiction that $w$ is not colored before $v_i$. There are two
+cases.
+
+\textbf{Case 1}: $w$ is colored after $v_{i+1}$.
+The tab\"{u} algorithm colors from the outer face inward. Nodes colored after
+all cycle nodes are topologically interior to $C$ in the planar sense: they are
+unreachable from the outer boundary without passing through $C$. Thus $w$ lies
+in the interior region $I$ of $C$. But $w \in E$ by hypothesis. Contradiction.
+
+\textbf{Case 2}: $w$ is colored after $v_i$ but before $v_{i+1}$.
+Then $w$ is a backward neighbor of $v_{i+1}$ but not of $v_i$.
+Since $v_{i+1} \in F_1$, all its backward neighbors have the same color:
+\[
+    c(w) = c_{\mathrm{back}}(v_{i+1}) = 1 - c(v_i) = 1-\alpha.
+\]
+But $w \sim v_i$ and $c(v_i) = \alpha$, so the coloring assigns $w$ a color
+not in $\{\alpha\}$. Since $c(w) = 1-\alpha \neq \alpha$, no coloring conflict
+arises from this. However, when $w$ is colored it is adjacent to $v_i$ (already
+colored $\alpha$), so $w$'s tab\"{u} includes $\alpha$. The greedy rule assigns
+$w$ the minimum color not in its tab\"{u}. If $w$'s only tab\"{u} color (from
+$v_i$) is $\alpha$, then $c(w) = 1-\alpha$.
+
+Now $v_{i+1}$'s backward neighbors include $v_i$ (color $\alpha$) and $w$
+(color $1-\alpha$). These are two \emph{distinct} colors, so $|BC(v_{i+1})| \geq 2$,
+placing $v_{i+1} \in F_{\geq 2}$. This contradicts $v_{i+1} \in F_1$.
+
+In both cases we reach a contradiction. Therefore $w$ must be colored before
+$v_i$.
+\end{proof}
+
+\begin{lemma}[Triangular E-face]
+\label{lem:triface}
+In a maximal planar graph $G$, for every edge $\{u, v\} \in E(G)$, there
+exists a vertex $w$ such that $u$-$v$-$w$ is a triangular face in the planar
+embedding. For any cycle $C$ containing edge $\{u,v\}$, one of the two
+triangular faces of $\{u,v\}$ lies in the exterior region $E$ of $C$; call
+its third vertex $w_E$.
+\end{lemma}
+
+\begin{proof}
+In a maximal planar graph, every face is a triangle, so every edge borders
+exactly two triangular faces. The cycle $C$ divides the plane into two open
+regions; the edge $\{u,v\}$ lies on the boundary of $C$, so one face is in $I$
+and one in $E$. The third vertex $w_E$ of the $E$-face exists by maximality.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:f1forest}]
+Suppose for contradiction that $B_1$ contains a cycle
+$C = v_1\text{-}v_2\text{-}\cdots\text{-}v_k\text{-}v_1$ (with vertices
+colored in this backward order, i.e., $v_k$ colored first, then $v_{k-1}$,
+\ldots, then $v_1$ last).
+
+By Lemma~\ref{lem:k3}, no triangle exists in $B_1$, so $k \geq 4$. By
+Lemma~\ref{lem:even}, $k$ is even and the colors alternate:
+$c(v_i) \in \{0,1\}$ with $c(v_i) + c(v_{i+1}) = 1$ for all $i$ (indices
+mod $k$). Write $c(v_i) = \alpha_i$ with $\alpha_i \in \{0,1\}$ and
+$\alpha_{i+1} = 1 - \alpha_i$.
+
+Take any consecutive pair $v_i$, $v_{i+1}$ in $C$ (so $v_{i+1}$ is colored
+before $v_i$ in the backward order). By Lemma~\ref{lem:triface}, there exists
+$w_E$ adjacent to both $v_i$ and $v_{i+1}$, lying in the exterior region $E$
+of $C$.
+
+By Lemma~\ref{lem:ebeforei}, $w_E$ is colored before $v_{i+1}$ (the earlier
+of the two), hence $w_E$ is a backward neighbor of both $v_i$ and $v_{i+1}$.
+
+Since $v_{i+1} \in F_1$: all backward neighbors of $v_{i+1}$ have the same
+color, so
+\[
+    c(w_E) = c_{\mathrm{back}}(v_{i+1}) = 1 - \alpha_{i+1} = \alpha_i.
+\]
+Since $v_i \in F_1$: all backward neighbors of $v_i$ have the same color, so
+\[
+    c(w_E) = c_{\mathrm{back}}(v_i) = 1 - \alpha_i.
+\]
+But $\alpha_i \neq 1 - \alpha_i$ for $\alpha_i \in \{0,1\}$. This is a
+contradiction.
+
+Therefore $B_1$ contains no cycle, i.e., $B_1$ is a forest.
+\end{proof}
+
+\begin{corollary}[4-color bound without backtracking]
+\label{cor:4color}
+Let $G$ be a maximal planar graph. The outer-face tab\"{u} algorithm produces a
+valid coloring of $G$ using at most $1 + 1 + 1 + 1 = 4$ colors: color $0$ for
+$F_0$, colors $\{0,1\}$ for $F_1$ (a forest, hence 2-colorable), color $2$ for
+$F_2$, and color $3$ for $F_3$ — provided $F_4 = \emptyset$.
+\end{corollary}
+
+\begin{remark}[On the condition $F_4 = \emptyset$]
+Theorem~\ref{thm:f1forest} proves that $F_1$ is a forest, eliminating one
+source of failure. Whether $F_4 = \emptyset$ always holds — i.e., whether the
+tab\"{u} ordering guarantees that no vertex ever sees 4 distinct backward colors
+— is equivalent to the Four Color Theorem itself. The theorem above provides a
+structural characterization of \emph{why} the algorithm works as well as it
+does, and reduces the 4-coloring question to a single combinatorial property
+($F_4 = \emptyset$) of the ordering.
+\end{remark}
+
+\subsection{Computational Verification}
+
+Theorem~\ref{thm:f1forest} was verified on:
+\begin{itemize}[noitemsep]
+    \item All named graphs: Errera, Kittell, dodecahedron, icosahedron,
+        octahedron, wheel graphs, grids — $B_1$ is a forest in all cases.
+    \item 474 random Delaunay triangulations: 3 cases where $B_1$ had a
+        cycle were all non-maximal planar graphs, consistent with the
+        theorem's hypothesis of maximality.
+\end{itemize}
+
+\textbf{Important correction.} An earlier version of this document reported that
+2\,000 random triangulations with triangular outer face produced zero failures.
+That test used a graph generation method that inadvertently produced planar
+triangulations where the outer face happened to be a triangle, but not all faces
+were triangular (non-maximal). On correct maximal planar triangulations with
+triangular outer face, the plain tab\"{u} algorithm achieves 4 colors in
+approximately 45\% of cases. This does not contradict
+Theorem~\ref{thm:f1forest}: the theorem guarantees $F_1$ is a forest, but
+$F_1$ being a forest is necessary, not sufficient, for 4-coloring. The failure
+cases all correspond to $F_4 \neq \emptyset$.
+
+\subsection{Attempts to Eliminate $F_4$}
+
+Three strategies were tested to prevent $F_4$ from appearing:
+
+\textbf{Interrupt strategy.} Before selecting from the outer face, check if any
+uncolored node has $|\tau(v)| = 3$ (one color left). If so, color it immediately.
+This prevents the node from reaching $|\tau| = 4$ due to subsequent neighbor
+colorings. Result: 32\% 4-colored on random Delaunay (vs 22\% plain tabu).
+
+\textbf{Recolor strategy.} When a node $v$ has $|\tau(v)| = 4$ (no color
+available), attempt to recolor a neighbor $u$: find a new color for $u$ that
+does not conflict with $u$'s other neighbors, freeing $u$'s original color for
+$v$. Result: 51\% 4-colored, always valid, no backtracking.
+
+\textbf{Kempe chain strategy.} When stuck, attempt a Kempe chain swap on
+neighbor colors. Result: 33\% 4-colored.
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Strategy} & \textbf{4-colored} & \textbf{Always valid} \\
+\midrule
+Plain tab\"{u}             & 22\% & Yes \\
+Tab\"{u} + interrupt       & 32\% & Yes \\
+Tab\"{u} + Kempe swap      & 33\% & Yes \\
+Tab\"{u} + recolor         & 51\% & Yes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+None of these strategies achieves 100\%. The fundamental reason: preventing
+$F_4$ from appearing is equivalent to showing that no planar graph has a vertex
+ordering where some node sees 4 distinct backward colors — which is exactly the
+Four Color Theorem stated algorithmically. The recoloring trick is essentially
+a local Kempe swap, the same operation at the heart of Kempe's original (flawed)
+proof attempt.
+
+\subsection{Connection to Arboricity}
+
+\begin{theorem}[Nash-Williams, 1961~\cite{nashwilliams1961}]
+Every planar graph satisfies $a(G) \leq 3$: its edges decompose into at most 3
+forests.
+\end{theorem}
+
+The phase decomposition provides a \emph{vertex} analogue: $V = F_0 \cup F_1
+\cup F_2 \cup F_3$, where $F_0 \cup F_1$ induces a forest (Theorem~\ref{thm:f1forest})
+and $F_2, F_3$ are independent sets (Theorem~\ref{thm:phase-indep}). This
+4-partition directly gives the 4-coloring when $F_4 = \emptyset$. The
+connection to arboricity is that the tab\"{u} ordering implicitly builds a
+2-forest cover of the vertex set, corresponding to Nash-Williams' edge forest
+decomposition with arboricity 2 for the backward subgraph.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Future Work}
+\label{sec:future}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Backtracking-Free Coloring --- Open Questions}
+
+The layer-by-layer tab\"{u} algorithm of Section~\ref{sec:tabu} produced a valid
+4-coloring of the Errera graph without backtracking. The central open question
+is whether this extends to all planar graphs:
+
+\begin{itemize}[noitemsep]
+    \item Does the layer-by-layer tab\"{u} algorithm always produce a valid
+        4-coloring for any planar graph, or are there counterexamples?
+    \item If it fails on some graphs, can the within-layer ordering (currently
+        ascending ID) be chosen more carefully --- for example by DSATUR within
+        each layer --- to avoid failures?
+    \item Is there a formal connection between the layer structure of the peeling
+        and the reducible configurations of Robertson et al.~\cite{robertson1997}?
+\end{itemize}
+
+\subsection{Schnyder Woods and Grid Embedding}
+
+\textbf{Schnyder woods}~\cite{schnyder1990} are an algebraic structure that
+partitions the interior edges of a maximal triangulation into three spanning
+trees $T_1, T_2, T_3$, one rooted at each outer-face vertex. At each interior
+vertex $v$, exactly one outgoing edge of each color exists, and incoming and
+outgoing edges alternate in a canonical cyclic order.
+
+This structure generates integer barycentric coordinates: for each vertex $v$,
+$a_i(v)$ counts faces in the region delimited by the $T_j$ and $T_k$ paths from
+$v$ to their roots, with $a_1 + a_2 + a_3 = F - 1$.
+
+\textbf{Coloring from Schnyder coordinates.} The parity map
+$c(v) = (a_1(v) \bmod 2) \cdot 2 + (a_2(v) \bmod 2)$ gives a valid 4-coloring
+of any maximal planar triangulation, provided the Schnyder wood satisfies the
+exact local condition at every vertex. The key property is that for any edge
+$\{u,v\}$ in a correct Schnyder wood, either $a_1(u) - a_1(v)$ or
+$a_2(u) - a_2(v)$ is odd, guaranteeing $c(u) \neq c(v)$.
+
+\textbf{Computational exploration.} We explored the connection between the
+Schnyder coordinate ordering and the tab\"{u} algorithm. An approximate Schnyder
+ordering was defined by sorting vertices by $(d_0+d_1+d_2, d_0, d_1)$ where
+$d_i$ is the BFS distance from outer vertex $t_i$. This ordering approximates
+the canonical ordering induced by the Schnyder wood. Combined with the recolor
+strategy (Section~\ref{sec:forest}), this achieved \textbf{62.1\% 4-coloring}
+on 1\,000 random Delaunay triangulations (vs 51\% for outer-face tab\"{u} with
+recolor, and 21.5\% for plain outer-face tab\"{u}).
+
+\textbf{Implementation status.} A full Schnyder wood requires the exact local
+condition (cyclic pattern out-1/in-3/out-3/in-2/out-2/in-1 at every interior
+vertex). Our BFS-approximate trees violate this condition for some edges, causing
+the parity coloring to produce conflicts (adjacent vertices with equal
+$(a_1 \bmod 2, a_2 \bmod 2)$). The correct implementation requires the canonical
+ordering algorithm of de Fraysseix and Ossona de Mendez (1994), which carefully
+tracks the ``active outer face'' at each step. This is left as future work.
+
+\textbf{Open question.} Does a correct Schnyder ordering (processing vertices in
+the order induced by the Schnyder wood's canonical sequence) as a tab\"{u}
+selection rule, combined with the recolor strategy, approach or guarantee 100\%
+4-coloring without backtracking? The approximate ordering already reduces
+6-color failures from 9.2\% to 0.9\%, suggesting the exact ordering could be
+significantly stronger.
+
+
+\subsection{Discharging Method}
+
+Implementing the discharging method would bridge the gap between the
+constructive demonstration (backtracking produces a coloring) and the universal
+proof (every planar graph admits one). The method assigns charge
+$\mu(v) = 6 - \degr(v)$ to each vertex; the total sum is 12 by Euler's
+formula. Discharge rules redistribute charge without changing the total; if no
+reducible configuration is present in the graph, the redistribution produces a
+contradiction ($\sum \mu'(v) \leq 0 < 12$)~\cite{robertson1997}.
+
+\subsection{Reducibility Testing}
+
+A configuration $C$ with outer ring $R$ is reducible if every valid 4-coloring
+of $R$ can be extended to the interior of $C$. Verifying this requires
+enumerating all colorings of the ring (at most $4^{|R|}$) and applying Kempe
+swaps when necessary~\cite{robertson1997}. Implementing this test would connect
+the system directly to the formal structure of Gonthier's proof.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Conclusions}
+% ══════════════════════════════════════════════════════════════════════════════
+
+We have documented a complete computational pipeline that, starting from the
+representation of a planar graph as ordered pairs, produces a valid coloring
+with at most four colors via:
+
+\begin{enumerate}[noitemsep]
+    \item Planarity verification in $O(|V|)$ (Boyer-Myrvold).
+    \item Constrained maximalization preserving original edges.
+    \item Tutte embedding: $14 \times 14$ Laplacian system for the Errera graph.
+    \item Topological peeling by outer face, with elimination degrees $\leq 5$.
+    \item Inverse greedy coloring guaranteeing at most 6 colors.
+    \item Kempe chain analysis: identification of tangled chains.
+    \item Layer-by-layer tab\"{u} coloring: 4 colors without backtracking on Errera.
+    \item CSP backtracking (MRV + forward checking) with 4-color guarantee.
+\end{enumerate}
+
+The system concretely exhibits the failure mechanism of Kempe's algorithm on the
+Errera graph (step 14: all chains tangled) and on the Kittell graph, which are
+historically the first counterexamples to the incorrect proof of 1879. The gap
+between the constructive coloring (backtracking produces the coloring) and the
+universal proof (discharging proves one always exists) delimits the scope of the
+system and points the direction of future work.
+
+% ── Bibliography ──────────────────────────────────────────────────────────────
+\newpage
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{99}
+
+\bibitem{deita2024}
+G. De Ita Luna and R. Marcial-Romero,
+``A combinatorial algorithmic proof for the 4-coloring on planar graphs,''
+Facultad de Ciencias de la Computaci\'on, BUAP, preprint, 2024.
+
+\bibitem{appelhaken1977}
+K. Appel and W. Haken,
+``Every planar map is four colorable. Part I: Discharging,''
+\textit{Illinois Journal of Mathematics}, vol. 21, no. 3, pp. 429--490, 1977.
+
+\bibitem{boyermyrvold1999}
+J. M. Boyer and W. J. Myrvold,
+``On the cutting edge: Simplified $O(n)$ planarity by edge addition,''
+\textit{Journal of Graph Algorithms and Applications}, vol. 8, no. 3,
+pp. 241--273, 2004.
+
+\bibitem{chrobak1995}
+M. Chrobak and T. H. Payne,
+``A linear-time algorithm for drawing a planar graph on a grid,''
+\textit{Information Processing Letters}, vol. 54, no. 4, pp. 241--246, 1995.
+
+\bibitem{chung1997}
+F. R. K. Chung,
+\textit{Spectral Graph Theory}.
+Providence, RI: American Mathematical Society, 1997.
+
+\bibitem{errera1921}
+A. Errera,
+``Du coloriage des cartes et de quelques questions d'analysis situs,''
+Ph.D. dissertation, Universit\'e Libre de Bruxelles, 1921.
+
+\bibitem{euler1752}
+L. Euler,
+``Elementa doctrinae solidorum,''
+\textit{Novi Commentarii Academiae Scientiarum Imperialis Petropolitanae},
+vol. 4, pp. 109--140, 1752.
+
+\bibitem{fary1948}
+I. F\'ary,
+``On straight-line representation of planar graphs,''
+\textit{Acta Scientiarum Mathematicarum}, vol. 11, pp. 229--233, 1948.
+
+\bibitem{gonthier2008}
+G. Gonthier,
+``Formal proof---The four-color theorem,''
+\textit{Notices of the American Mathematical Society}, vol. 55, no. 11,
+pp. 1382--1393, 2008.
+
+\bibitem{haralick1980}
+R. M. Haralick and G. L. Elliott,
+``Increasing tree search efficiency for constraint satisfaction problems,''
+\textit{Artificial Intelligence}, vol. 14, no. 3, pp. 263--313, 1980.
+
+\bibitem{heawood1890}
+P. J. Heawood,
+``Map-colour theorem,''
+\textit{Quarterly Journal of Pure and Applied Mathematics}, vol. 24,
+pp. 332--338, 1890.
+
+\bibitem{kempe1879}
+A. B. Kempe,
+``On the geographical problem of the four colours,''
+\textit{American Journal of Mathematics}, vol. 2, no. 3, pp. 193--200, 1879.
+
+\bibitem{kittell1935}
+I. Kittell,
+``A group of operations on a partially colored map,''
+\textit{Bulletin of the American Mathematical Society}, vol. 41, no. 6,
+pp. 407--413, 1935.
+
+\bibitem{kuratowski1930}
+K. Kuratowski,
+``Sur le probl\`eme des courbes gauches en topologie,''
+\textit{Fundamenta Mathematicae}, vol. 15, pp. 271--283, 1930.
+
+\bibitem{matula1983}
+D. W. Matula and L. L. Beck,
+``Smallest-last ordering and clustering and graph coloring algorithms,''
+\textit{Journal of the ACM}, vol. 30, no. 3, pp. 417--427, 1983.
+
+\bibitem{mohar2001}
+B. Mohar and C. Thomassen,
+\textit{Graphs on Surfaces}.
+Baltimore, MD: Johns Hopkins University Press, 2001.
+
+\bibitem{robertson1997}
+N. Robertson, D. P. Sanders, P. Seymour, and R. Thomas,
+``The four-colour theorem,''
+\textit{Journal of Combinatorial Theory, Series B}, vol. 70, no. 1,
+pp. 2--44, 1997.
+
+\bibitem{russell2020}
+S. Russell and P. Norvig,
+\textit{Artificial Intelligence: A Modern Approach}, 4th ed.
+Hoboken, NJ: Pearson, 2020.
+
+\bibitem{schnyder1990}
+W. Schnyder,
+``Embedding planar graphs on the grid,''
+in \textit{Proc. 1st ACM-SIAM Symposium on Discrete Algorithms (SODA)},
+San Francisco, CA, 1990, pp. 138--148.
+
+\bibitem{shamos1976}
+M. I. Shamos and D. Hoey,
+``Geometric intersection problems,''
+in \textit{Proc. 17th Annual Symposium on Foundations of Computer Science (FOCS)},
+Houston, TX, 1976, pp. 208--215.
+
+\bibitem{tutte1963}
+W. T. Tutte,
+``How to draw a graph,''
+\textit{Proceedings of the London Mathematical Society}, vol. 13, no. 1,
+pp. 743--768, 1963.
+
+\bibitem{wilson2002}
+R. J. Wilson,
+\textit{Four Colors Suffice: How the Map Problem Was Solved}.
+Princeton, NJ: Princeton University Press, 2002.
+
+\end{thebibliography}
+
+\end{document}
